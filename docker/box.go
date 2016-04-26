@@ -371,25 +371,39 @@ func (b *DockerBox) Run(ctx context.Context, env *util.Environment) (*docker.Con
 		ports = exposedPorts(b.config.Ports)
 	}
 
+	conf := &docker.Config{
+		Image:           env.Interpolate(b.Name),
+		Tty:             false,
+		OpenStdin:       true,
+		Cmd:             cmd,
+		Env:             myEnv,
+		AttachStdin:     true,
+		AttachStdout:    true,
+		AttachStderr:    true,
+		ExposedPorts:    ports,
+		NetworkDisabled: b.networkDisabled,
+		DNS:             b.dockerOptions.DockerDNS,
+		Entrypoint:      entrypoint,
+		// Volumes: volumes,
+	}
+
+	if b.dockerOptions.DockerMemory != 0 {
+		conf.Memory = b.dockerOptions.DockerMemory / b.dockerOptions.DockerContainers
+	}
+
+	if b.dockerOptions.DockerMemorySwap != 0 {
+		conf.MemorySwap = b.dockerOptions.DockerMemorySwap / b.dockerOptions.DockerContainers
+	}
+
+	if b.dockerOptions.DockerKernelMemory != 0 {
+		conf.KernelMemory = b.dockerOptions.DockerKernelMemory / b.dockerOptions.DockerContainers
+	}
+
 	// Make and start the container
 	container, err := client.CreateContainer(
 		docker.CreateContainerOptions{
-			Name: b.getContainerName(),
-			Config: &docker.Config{
-				Image:           env.Interpolate(b.Name),
-				Tty:             false,
-				OpenStdin:       true,
-				Cmd:             cmd,
-				Env:             myEnv,
-				AttachStdin:     true,
-				AttachStdout:    true,
-				AttachStderr:    true,
-				ExposedPorts:    ports,
-				NetworkDisabled: b.networkDisabled,
-				DNS:             b.dockerOptions.DockerDNS,
-				Entrypoint:      entrypoint,
-				// Volumes: volumes,
-			},
+			Name:   b.getContainerName(),
+			Config: conf,
 		})
 	if err != nil {
 		return nil, err
@@ -412,12 +426,22 @@ func (b *DockerBox) Run(ctx context.Context, env *util.Environment) (*docker.Con
 		portsToBind = b.config.Ports
 	}
 
-	client.StartContainer(container.ID, &docker.HostConfig{
+	hostConf := &docker.HostConfig{
 		Binds:        binds,
 		Links:        b.links(),
 		PortBindings: portBindings(portsToBind),
 		DNS:          b.dockerOptions.DockerDNS,
-	})
+	}
+
+	if b.dockerOptions.DockerCPUPeriod != 0 {
+		hostConf.CPUPeriod = b.dockerOptions.DockerCPUPeriod
+	}
+
+	if b.dockerOptions.DockerCPUQuota != 0 {
+		hostConf.CPUQuota = b.dockerOptions.DockerCPUQuota / b.dockerOptions.DockerContainers
+	}
+
+	client.StartContainer(container.ID, hostConf)
 	b.container = container
 	return container, nil
 }

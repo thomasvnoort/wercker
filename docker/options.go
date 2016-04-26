@@ -25,11 +25,18 @@ import (
 
 // DockerOptions for our docker client
 type DockerOptions struct {
-	DockerHost      string
-	DockerTLSVerify string
-	DockerCertPath  string
-	DockerDNS       []string
-	DockerLocal     bool
+	DockerHost         string
+	DockerTLSVerify    string
+	DockerCertPath     string
+	DockerDNS          []string
+	DockerLocal        bool
+	DockerCPUPeriod    int64
+	DockerCPUQuota     int64
+	DockerMemory       int64
+	DockerMemorySwap   int64
+	DockerKernelMemory int64
+	// So we know how many containers we'll be splitting between
+	DockerContainers int64
 }
 
 func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
@@ -107,13 +114,23 @@ func NewDockerOptions(c util.Settings, e *util.Environment) (*DockerOptions, err
 	dockerCertPath, _ := c.String("docker-cert-path")
 	dockerDNS, _ := c.StringSlice("docker-dns")
 	dockerLocal, _ := c.Bool("docker-local")
+	dockerCPUPeriod, _ := c.Int("docker-cpu-period")
+	dockerCPUQuota, _ := c.Int("docker-cpu-quota")
+	dockerMemory, _ := c.Int("docker-memory")
+	dockerMemorySwap, _ := c.Int("docker-memory-swap")
+	dockerKernelMemory, _ := c.Int("docker-kernel-memory")
 
 	speculativeOptions := &DockerOptions{
-		DockerHost:      dockerHost,
-		DockerTLSVerify: dockerTLSVerify,
-		DockerCertPath:  dockerCertPath,
-		DockerDNS:       dockerDNS,
-		DockerLocal:     dockerLocal,
+		DockerHost:         dockerHost,
+		DockerTLSVerify:    dockerTLSVerify,
+		DockerCertPath:     dockerCertPath,
+		DockerDNS:          dockerDNS,
+		DockerLocal:        dockerLocal,
+		DockerCPUPeriod:    int64(dockerCPUPeriod),
+		DockerCPUQuota:     int64(dockerCPUQuota),
+		DockerMemory:       int64(dockerMemory),
+		DockerMemorySwap:   int64(dockerMemorySwap),
+		DockerKernelMemory: int64(dockerKernelMemory),
 	}
 
 	// We're going to try out a few settings and set DockerHost if
