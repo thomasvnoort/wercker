@@ -41,6 +41,11 @@ var (
 		cli.StringSliceFlag{Name: "docker-dns", Value: &cli.StringSlice{0: "8.8.8.8", 1: "8.8.4.4"}, Usage: "Docker DNS server.", EnvVar: "DOCKER_DNS", Hidden: true},
 		cli.BoolFlag{Name: "docker-local", Usage: "Don't interact with remote repositories"},
 		cli.StringFlag{Name: "checkpoint", Value: "", Usage: "Skip to the next step after a recent build checkpoint."},
+		cli.IntFlag{Name: "docker-cpu-period", Usage: "Set docker CPU period", Hidden: true},
+		cli.IntFlag{Name: "docker-cpu-quota", Usage: "Set docker CPU quota", Hidden: true},
+		cli.IntFlag{Name: "docker-memory", Usage: "Set docker user memory limit in MB", Hidden: true},
+		cli.IntFlag{Name: "docker-memory-swap", Usage: "Set docker user memory swap limit in MB", Hidden: true},
+		cli.IntFlag{Name: "docker-kernel-memory", Usage: "Set docker kernel memory limit in MB", Hidden: true},
 	}
 
 	// These flags control where we store local files

@@ -143,17 +143,31 @@ func (b *InternalServiceBox) Run(ctx context.Context, env *util.Environment, lin
 		cmdInfo = append(cmdInfo, origCmd...)
 	}
 
+	conf := &docker.Config{
+		Image:           b.Name,
+		Cmd:             cmd,
+		Env:             myEnv,
+		NetworkDisabled: b.networkDisabled,
+		DNS:             b.dockerOptions.DockerDNS,
+		Entrypoint:      entrypoint,
+	}
+
+	if b.dockerOptions.DockerMemory != 0 {
+		conf.Memory = b.dockerOptions.DockerMemory / b.dockerOptions.DockerContainers
+	}
+
+	if b.dockerOptions.DockerMemorySwap != 0 {
+		conf.MemorySwap = b.dockerOptions.DockerMemorySwap / b.dockerOptions.DockerContainers
+	}
+
+	if b.dockerOptions.DockerKernelMemory != 0 {
+		conf.KernelMemory = b.dockerOptions.DockerKernelMemory / b.dockerOptions.DockerContainers
+	}
+
 	container, err := client.CreateContainer(
 		docker.CreateContainerOptions{
-			Name: b.getContainerName(),
-			Config: &docker.Config{
-				Image:           b.Name,
-				Cmd:             cmd,
-				Env:             myEnv,
-				NetworkDisabled: b.networkDisabled,
-				DNS:             b.dockerOptions.DockerDNS,
-				Entrypoint:      entrypoint,
-			},
+			Name:   b.getContainerName(),
+			Config: conf,
 		})
 
 	if err != nil {
@@ -172,10 +186,20 @@ func (b *InternalServiceBox) Run(ctx context.Context, env *util.Environment, lin
 		b.logger.Println(f.Info(fmt.Sprintf("Starting service %s", b.ShortName), strings.Join(out, " ")))
 	}
 
-	client.StartContainer(container.ID, &docker.HostConfig{
+	hostConf := &docker.HostConfig{
 		DNS:   b.dockerOptions.DockerDNS,
 		Links: links,
-	})
+	}
+
+	if b.dockerOptions.DockerCPUPeriod != 0 {
+		hostConf.CPUPeriod = b.dockerOptions.DockerCPUPeriod
+	}
+
+	if b.dockerOptions.DockerCPUQuota != 0 {
+		hostConf.CPUQuota = b.dockerOptions.DockerCPUQuota / b.dockerOptions.DockerContainers
+	}
+
+	client.StartContainer(container.ID, hostConf)
 	b.container = container
 
 	go func() {

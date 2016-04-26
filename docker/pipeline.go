@@ -52,6 +52,9 @@ func NewDockerPipeline(name string, config *core.Config, options *core.PipelineO
 		servicesConfig = config.Services
 	}
 
+	// Set the number of containers
+	dockerOptions.DockerContainers = int64(len(servicesConfig) + 1)
+
 	stepsConfig := pipelineConfig.Steps
 	if options.DeployTarget != "" {
 		sectionSteps, ok := pipelineConfig.StepsMap[options.DeployTarget]
