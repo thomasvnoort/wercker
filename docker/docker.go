@@ -40,7 +40,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func RequireDockerEndpoint(options *DockerOptions) error {
+func RequireDockerEndpoint(options *Options) error {
 	client, err := NewDockerClient(options)
 	if err != nil {
 		if err == docker.ErrInvalidEndpoint {
@@ -48,7 +48,7 @@ func RequireDockerEndpoint(options *DockerOptions) error {
 		  %s
 		To specify a different endpoint use the DOCKER_HOST environment variable,
 		or the --docker-host command-line flag.
-`, options.DockerHost)
+`, options.Host)
 		}
 		return err
 	}
@@ -58,7 +58,7 @@ func RequireDockerEndpoint(options *DockerOptions) error {
 			return fmt.Errorf(`You don't seem to have a working Docker environment or wercker can't connect to the Docker endpoint:
 	%s
 To specify a different endpoint use the DOCKER_HOST environment variable,
-or the --docker-host command-line flag.`, options.DockerHost)
+or the --docker-host command-line flag.`, options.Host)
 		}
 		return err
 	}
@@ -83,9 +83,9 @@ type DockerClient struct {
 }
 
 // NewDockerClient based on options and env
-func NewDockerClient(options *DockerOptions) (*DockerClient, error) {
-	dockerHost := options.DockerHost
-	tlsVerify := options.DockerTLSVerify
+func NewDockerClient(options *Options) (*DockerClient, error) {
+	dockerHost := options.Host
+	tlsVerify := options.TLSVerify
 
 	logger := util.RootLogger().WithField("Logger", "Docker")
 
@@ -97,7 +97,7 @@ func NewDockerClient(options *DockerOptions) (*DockerClient, error) {
 	if tlsVerify == "1" {
 		// We're using TLS, let's locate our certs and such
 		// boot2docker puts its certs at...
-		dockerCertPath := options.DockerCertPath
+		dockerCertPath := options.CertPath
 
 		// TODO(termie): maybe fast-fail if these don't exist?
 		cert := path.Join(dockerCertPath, fmt.Sprintf("cert.pem"))
@@ -297,7 +297,7 @@ type DockerImageJSONContainerConfig struct {
 }
 
 // NewDockerScratchPushStep constructorama
-func NewDockerScratchPushStep(stepConfig *core.StepConfig, options *core.PipelineOptions, dockerOptions *DockerOptions) (*DockerScratchPushStep, error) {
+func NewDockerScratchPushStep(stepConfig *core.StepConfig, options *core.PipelineOptions, dockerOptions *Options) (*DockerScratchPushStep, error) {
 	name := "docker-scratch-push"
 	displayName := "docker scratch'n'push"
 	if stepConfig.Name != "" {
@@ -536,7 +536,7 @@ func (s *DockerScratchPushStep) Execute(ctx context.Context, sess *core.Session)
 	}
 
 	// Check the auth
-	if !s.dockerOptions.DockerLocal {
+	if !s.dockerOptions.Local {
 		check, err := s.authenticator.CheckAccess(s.repository, auth.Push)
 		if !check || err != nil {
 			s.logger.Errorln("Not allowed to interact with this repository:", s.repository)
@@ -607,7 +607,7 @@ func (s *DockerScratchPushStep) CollectArtifact(containerID string) (*core.Artif
 type DockerPushStep struct {
 	*core.BaseStep
 	options       *core.PipelineOptions
-	dockerOptions *DockerOptions
+	dockerOptions *Options
 	data          map[string]string
 	email         string
 	env           []string
@@ -630,7 +630,7 @@ type DockerPushStep struct {
 }
 
 // NewDockerPushStep is a special step for doing docker pushes
-func NewDockerPushStep(stepConfig *core.StepConfig, options *core.PipelineOptions, dockerOptions *DockerOptions) (*DockerPushStep, error) {
+func NewDockerPushStep(stepConfig *core.StepConfig, options *core.PipelineOptions, dockerOptions *Options) (*DockerPushStep, error) {
 	name := "docker-push"
 	displayName := "docker push"
 	if stepConfig.Name != "" {
@@ -849,7 +849,7 @@ func (s *DockerPushStep) Execute(ctx context.Context, sess *core.Session) (int, 
 	if len(s.tags) == 0 {
 		s.tags = []string{"latest"}
 	}
-	if !s.dockerOptions.DockerLocal {
+	if !s.dockerOptions.Local {
 		check, err := s.authenticator.CheckAccess(s.repository, auth.Push)
 		if err != nil {
 			s.logger.Errorln("Error interacting with this repository:", s.repository, err)
@@ -917,7 +917,7 @@ func (s *DockerPushStep) tagAndPush(imageID string, e *core.NormalizedEmitter, c
 			RawJSONStream: true,
 			Tag:           tag,
 		}
-		if !s.dockerOptions.DockerLocal {
+		if !s.dockerOptions.Local {
 			auth := docker.AuthConfiguration{
 				Username: s.authenticator.Username(),
 				Password: s.authenticator.Password(),

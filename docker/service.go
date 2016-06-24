@@ -56,7 +56,7 @@ type ExternalServiceBox struct {
 }
 
 // NewExternalServiceBox gives us an ExternalServiceBox from config
-func NewExternalServiceBox(boxConfig *core.BoxConfig, options *core.PipelineOptions, dockerOptions *DockerOptions, builder Builder) (*ExternalServiceBox, error) {
+func NewExternalServiceBox(boxConfig *core.BoxConfig, options *core.PipelineOptions, dockerOptions *Options, builder Builder) (*ExternalServiceBox, error) {
 	logger := util.RootLogger().WithField("Logger", "ExternalService")
 	box := &DockerBox{options: options, dockerOptions: dockerOptions, config: boxConfig}
 	return &ExternalServiceBox{
@@ -80,7 +80,7 @@ func (s *ExternalServiceBox) Fetch(ctx context.Context, env *util.Environment) (
 	return image, err
 }
 
-func NewServiceBox(config *core.BoxConfig, options *core.PipelineOptions, dockerOptions *DockerOptions, builder Builder) (core.ServiceBox, error) {
+func NewServiceBox(config *core.BoxConfig, options *core.PipelineOptions, dockerOptions *Options, builder Builder) (core.ServiceBox, error) {
 	if config.IsExternal() {
 		return NewExternalServiceBox(config, options, dockerOptions, builder)
 	}
@@ -88,7 +88,7 @@ func NewServiceBox(config *core.BoxConfig, options *core.PipelineOptions, docker
 }
 
 // NewServiceBox from a name and other references
-func NewInternalServiceBox(boxConfig *core.BoxConfig, options *core.PipelineOptions, dockerOptions *DockerOptions) (*InternalServiceBox, error) {
+func NewInternalServiceBox(boxConfig *core.BoxConfig, options *core.PipelineOptions, dockerOptions *Options) (*InternalServiceBox, error) {
 	box, err := NewDockerBox(boxConfig, options, dockerOptions)
 	logger := util.RootLogger().WithField("Logger", "Service")
 	return &InternalServiceBox{DockerBox: box, logger: logger}, err
@@ -153,20 +153,20 @@ func (b *InternalServiceBox) Run(ctx context.Context, env *util.Environment, lin
 		Env:             myEnv,
 		ExposedPorts:    exposedPorts(b.config.Ports),
 		NetworkDisabled: b.networkDisabled,
-		DNS:             b.dockerOptions.DockerDNS,
+		DNS:             b.dockerOptions.DNS,
 		Entrypoint:      entrypoint,
 	}
 
-	if b.dockerOptions.DockerMemory != 0 {
-		conf.Memory = b.dockerOptions.DockerMemory / b.dockerOptions.DockerContainers
+	if b.dockerOptions.Memory != 0 {
+		conf.Memory = b.dockerOptions.Memory / b.dockerOptions.Containers
 	}
 
-	if b.dockerOptions.DockerMemorySwap != 0 {
-		conf.MemorySwap = b.dockerOptions.DockerMemorySwap / b.dockerOptions.DockerContainers
+	if b.dockerOptions.MemorySwap != 0 {
+		conf.MemorySwap = b.dockerOptions.MemorySwap / b.dockerOptions.Containers
 	}
 
-	if b.dockerOptions.DockerKernelMemory != 0 {
-		conf.KernelMemory = b.dockerOptions.DockerKernelMemory / b.dockerOptions.DockerContainers
+	if b.dockerOptions.KernelMemory != 0 {
+		conf.KernelMemory = b.dockerOptions.KernelMemory / b.dockerOptions.Containers
 	}
 
 	container, err := client.CreateContainer(
@@ -198,17 +198,17 @@ func (b *InternalServiceBox) Run(ctx context.Context, env *util.Environment, lin
 	}
 
 	hostConf := &docker.HostConfig{
-		DNS:          b.dockerOptions.DockerDNS,
+		DNS:          b.dockerOptions.DNS,
 		PortBindings: portBindings(portsToBind),
 		Links:        links,
 	}
 
-	if b.dockerOptions.DockerCPUPeriod != 0 {
-		hostConf.CPUPeriod = b.dockerOptions.DockerCPUPeriod
+	if b.dockerOptions.CPUPeriod != 0 {
+		hostConf.CPUPeriod = b.dockerOptions.CPUPeriod
 	}
 
-	if b.dockerOptions.DockerCPUQuota != 0 {
-		hostConf.CPUQuota = b.dockerOptions.DockerCPUQuota / b.dockerOptions.DockerContainers
+	if b.dockerOptions.CPUQuota != 0 {
+		hostConf.CPUQuota = b.dockerOptions.CPUQuota / b.dockerOptions.Containers
 	}
 
 	client.StartContainer(container.ID, hostConf)

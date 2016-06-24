@@ -34,12 +34,12 @@ import (
 
 // pipelineGetter is a function that will fetch the appropriate pipeline
 // object from the Config.
-type pipelineGetter func(*core.Config, *core.PipelineOptions, *dockerlocal.DockerOptions) (core.Pipeline, error)
+type pipelineGetter func(*core.Config, *core.PipelineOptions, *dockerlocal.Options) (core.Pipeline, error)
 
 // GetDevPipelineFactory makes dev pipelines out of arbitrarily
 // named config sections
-func GetDevPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.DockerOptions) (core.Pipeline, error) {
-	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.DockerOptions) (core.Pipeline, error) {
+func GetDevPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.Options) (core.Pipeline, error) {
+	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.Options) (core.Pipeline, error) {
 		builder := NewDockerBuilder(options, dockerOptions)
 		_, ok := config.PipelinesMap[name]
 		if !ok {
@@ -51,8 +51,8 @@ func GetDevPipelineFactory(name string) func(*core.Config, *core.PipelineOptions
 
 // GetBuildPipelineFactory makes build pipelines out of arbitrarily
 // named config sections
-func GetBuildPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.DockerOptions) (core.Pipeline, error) {
-	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.DockerOptions) (core.Pipeline, error) {
+func GetBuildPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.Options) (core.Pipeline, error) {
+	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.Options) (core.Pipeline, error) {
 		builder := NewDockerBuilder(options, dockerOptions)
 		_, ok := config.PipelinesMap[name]
 		if !ok {
@@ -64,8 +64,8 @@ func GetBuildPipelineFactory(name string) func(*core.Config, *core.PipelineOptio
 
 // GetDeployPipelineFactory makes deploy pipelines out of arbitrarily
 // named config sections
-func GetDeployPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.DockerOptions) (core.Pipeline, error) {
-	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.DockerOptions) (core.Pipeline, error) {
+func GetDeployPipelineFactory(name string) func(*core.Config, *core.PipelineOptions, *dockerlocal.Options) (core.Pipeline, error) {
+	return func(config *core.Config, options *core.PipelineOptions, dockerOptions *dockerlocal.Options) (core.Pipeline, error) {
 		builder := NewDockerBuilder(options, dockerOptions)
 		_, ok := config.PipelinesMap[name]
 		if !ok {
@@ -78,7 +78,7 @@ func GetDeployPipelineFactory(name string) func(*core.Config, *core.PipelineOpti
 // Runner is the base type for running the pipelines.
 type Runner struct {
 	options       *core.PipelineOptions
-	dockerOptions *dockerlocal.DockerOptions
+	dockerOptions *dockerlocal.Options
 	literalLogger *event.LiteralLogHandler
 	metrics       *event.MetricsEventHandler
 	reporter      *event.ReportHandler
@@ -89,7 +89,7 @@ type Runner struct {
 }
 
 // NewRunner from global options
-func NewRunner(ctx context.Context, options *core.PipelineOptions, dockerOptions *dockerlocal.DockerOptions, getPipeline pipelineGetter) (*Runner, error) {
+func NewRunner(ctx context.Context, options *core.PipelineOptions, dockerOptions *dockerlocal.Options, getPipeline pipelineGetter) (*Runner, error) {
 	e, err := core.EmitterFromContext(ctx)
 	if err != nil {
 		return nil, err

@@ -24,23 +24,23 @@ import (
 )
 
 // DockerOptions for our docker client
-type DockerOptions struct {
-	DockerHost         string
-	DockerTLSVerify    string
-	DockerCertPath     string
-	DockerDNS          []string
-	DockerLocal        bool
-	DockerCPUPeriod    int64
-	DockerCPUQuota     int64
-	DockerMemory       int64
-	DockerMemorySwap   int64
-	DockerKernelMemory int64
+type Options struct {
+	Host         string
+	TLSVerify    string
+	CertPath     string
+	DNS          []string
+	Local        bool
+	CPUPeriod    int64
+	CPUQuota     int64
+	Memory       int64
+	MemorySwap   int64
+	KernelMemory int64
 	// So we know how many containers we'll be splitting between
-	DockerContainers int64
+	Containers int64
 }
 
-func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
-	if opts.DockerHost != "" {
+func guessAndUpdateDockerOptions(opts *Options, e *util.Environment) {
+	if opts.Host != "" {
 		return
 	}
 
@@ -56,13 +56,13 @@ func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
 
 	if _, err := os.Stat(unixSocket); err == nil {
 		unixSocket = fmt.Sprintf("unix://%s", unixSocket)
-		client, err := NewDockerClient(&DockerOptions{
-			DockerHost: unixSocket,
+		client, err := NewDockerClient(&Options{
+			Host: unixSocket,
 		})
 		if err == nil {
 			_, err = client.Version()
 			if err == nil {
-				opts.DockerHost = unixSocket
+				opts.Host = unixSocket
 				return
 			}
 		}
@@ -73,10 +73,10 @@ func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
 	b2dHost := "tcp://192.168.59.103:2376"
 
 	logger.Printf(f.Info("No Docker host specified, checking for boot2docker", b2dHost))
-	client, err := NewDockerClient(&DockerOptions{
-		DockerHost:      b2dHost,
-		DockerCertPath:  b2dCertPath,
-		DockerTLSVerify: "1",
+	client, err := NewDockerClient(&Options{
+		Host:      b2dHost,
+		CertPath:  b2dCertPath,
+		TLSVerify: "1",
 	})
 	if err == nil {
 		// This can take a long time if it isn't up, so toss it in a
@@ -93,9 +93,9 @@ func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
 		select {
 		case success := <-result:
 			if success {
-				opts.DockerHost = b2dHost
-				opts.DockerCertPath = b2dCertPath
-				opts.DockerTLSVerify = "1"
+				opts.Host = b2dHost
+				opts.CertPath = b2dCertPath
+				opts.TLSVerify = "1"
 				return
 			}
 		case <-time.After(1 * time.Second):
@@ -103,12 +103,12 @@ func guessAndUpdateDockerOptions(opts *DockerOptions, e *util.Environment) {
 	}
 
 	// Pick a default localhost port and hope for the best :/
-	opts.DockerHost = "tcp://127.0.0.1:2375"
-	logger.Println(f.Info("No Docker host found, falling back to default", opts.DockerHost))
+	opts.Host = "tcp://127.0.0.1:2375"
+	logger.Println(f.Info("No Docker host found, falling back to default", opts.Host))
 }
 
-// NewDockerOptions constructor
-func NewDockerOptions(c util.Settings, e *util.Environment) (*DockerOptions, error) {
+// NewOptions constructor
+func NewOptions(c util.Settings, e *util.Environment) (*Options, error) {
 	dockerHost, _ := c.String("docker-host")
 	dockerTLSVerify, _ := c.String("docker-tls-verify")
 	dockerCertPath, _ := c.String("docker-cert-path")
@@ -120,17 +120,17 @@ func NewDockerOptions(c util.Settings, e *util.Environment) (*DockerOptions, err
 	dockerMemorySwap, _ := c.Int("docker-memory-swap")
 	dockerKernelMemory, _ := c.Int("docker-kernel-memory")
 
-	speculativeOptions := &DockerOptions{
-		DockerHost:         dockerHost,
-		DockerTLSVerify:    dockerTLSVerify,
-		DockerCertPath:     dockerCertPath,
-		DockerDNS:          dockerDNS,
-		DockerLocal:        dockerLocal,
-		DockerCPUPeriod:    int64(dockerCPUPeriod),
-		DockerCPUQuota:     int64(dockerCPUQuota),
-		DockerMemory:       int64(dockerMemory),
-		DockerMemorySwap:   int64(dockerMemorySwap),
-		DockerKernelMemory: int64(dockerKernelMemory),
+	speculativeOptions := &Options{
+		Host:         dockerHost,
+		TLSVerify:    dockerTLSVerify,
+		CertPath:     dockerCertPath,
+		DNS:          dockerDNS,
+		Local:        dockerLocal,
+		CPUPeriod:    int64(dockerCPUPeriod),
+		CPUQuota:     int64(dockerCPUQuota),
+		Memory:       int64(dockerMemory),
+		MemorySwap:   int64(dockerMemorySwap),
+		KernelMemory: int64(dockerKernelMemory),
 	}
 
 	// We're going to try out a few settings and set DockerHost if
