@@ -78,7 +78,7 @@ func (s *ConfigSuite) TestConfigBoxStructs() {
 	_, ok = authenticator.(*auth.AmazonAuth)
 	s.Equal(ok, true)
 
-	docker := config.PipelinesMap["docker-v2"]
+	docker := config.PipelinesMap["docker"]
 	assert.NotNil(s.T(), docker.Box.Auth)
 	_, ok = docker.Box.Auth.(*DockerAuth)
 	s.Equal(ok, true)
@@ -86,7 +86,7 @@ func (s *ConfigSuite) TestConfigBoxStructs() {
 	_, ok = authenticator.(*auth.DockerAuth)
 	s.Equal(ok, true)
 
-	dockerV1 := config.PipelinesMap["docker"]
+	dockerV1 := config.PipelinesMap["docker-v1"]
 	assert.NotNil(s.T(), dockerV1.Box.Auth)
 	_, ok = dockerV1.Box.Auth.(*DockerAuth)
 	s.Equal(ok, true)

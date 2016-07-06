@@ -31,7 +31,7 @@ func NormalizeRegistry(address string) string {
 	logger := util.RootLogger().WithField("Logger", "Docker")
 	if address == "" {
 		logger.Debugln("No registry address provided, using https://registry.hub.docker.com")
-		return "https://registry.hub.docker.com/v1/"
+		return "https://registry.hub.docker.com/v2/"
 	}
 
 	parsed, err := url.Parse(address)
@@ -56,9 +56,9 @@ func NormalizeRegistry(address string) string {
 	parts := strings.Split(address, "/")
 	possiblyAPIVersionStr := parts[len(parts)-1]
 
-	// send them a v1 registry if they don't specify
+	// send them a v2 registry if they don't specify
 	if possiblyAPIVersionStr != "v1" && possiblyAPIVersionStr != "v2" {
-		newParts := append(parts, "v1")
+		newParts := append(parts, "v2")
 		address = strings.Join(newParts, "/")
 	}
 	return address + "/"
