@@ -296,7 +296,7 @@ func (p *Runner) GetConfig() (*core.Config, string, error) {
 	}
 
 	// Only use the ignore file from the config when it is not empty and not defined as a command-line option
-	if rawConfig.IgnoreFile != "" && p.options.DefaultsUsed.IgnoreFileDefault {
+	if rawConfig.IgnoreFile != "" && p.options.DefaultsUsed.IgnoreFile {
 	  p.options.IgnoreFile = rawConfig.IgnoreFile
 	}
 

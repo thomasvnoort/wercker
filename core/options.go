@@ -370,7 +370,7 @@ type PipelineOptions struct {
 }
 
 type PipelineDefaultsUsed struct {
-	IgnoreFileDefault bool
+	IgnoreFile bool
 }
 
 func guessApplicationID(c util.Settings, e *util.Environment, name string) string {
@@ -579,7 +579,7 @@ func NewPipelineOptions(c util.Settings, e *util.Environment) (*PipelineOptions,
 	checkpoint, _ := c.String("checkpoint")
 
 	defaultsUsed := PipelineDefaultsUsed {
-		IgnoreFileDefault: !ignoreFileSet,
+		IgnoreFile: !ignoreFileSet,
 	}
 
 	return &PipelineOptions{
